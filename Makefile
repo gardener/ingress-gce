@@ -3,10 +3,10 @@
 # SPDX-License-Identifier: Apache-2.0
 
 .ONESHELL:
-.SHELLFLAGS 	 := -eu -o pipefail -c
-SHELL 			 := bash
-MAKEFLAGS 		 += --warn-undefined-variables
-MAKEFLAGS 		 += --no-builtin-rules
+.SHELLFLAGS      := -eu -o pipefail -c
+SHELL            := bash
+MAKEFLAGS        += --warn-undefined-variables
+MAKEFLAGS        += --no-builtin-rules
 IMAGE_REPOSITORY := ghcr.io/gardener/ingress-gce
 IMAGE_TAG        := $(shell git describe --tags --always)
 

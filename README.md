@@ -8,7 +8,7 @@ This repository is dedicated to building [kubernetes/ingress-gce](https://github
 
 Once in a while a new release of the
 [kubernetes/ingress-gce](https://github.com/kubernetes/ingress-gce) will be
-released and we need to build new docker image. In order to trigger the new
+released and we need to build new container image. In order to trigger the new
 release one can use two options, tigger the release workflow from the web UI or
 from CLI, see more at the
 https://docs.github.com/en/actions/managing-workflow-runs-and-deployments/managing-workflow-runs/manually-running-a-workflow.
