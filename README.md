@@ -2,6 +2,45 @@
 
 [![reuse compliant](https://reuse.software/badge/reuse-compliant.svg)](https://reuse.software/)
 
+This repository is dedicated to building [kubernetes/ingress-gce](https://github.com/kubernetes/ingress-gce) images for Gardener project.
+
+## Building a new Release
+
+Once in a while a new release of the
+[kubernetes/ingress-gce](https://github.com/kubernetes/ingress-gce) will be
+released and we need to build new docker image. In order to trigger the new
+release one can use two options, tigger the release workflow from the web UI or
+from CLI, see more at the
+https://docs.github.com/en/actions/managing-workflow-runs-and-deployments/managing-workflow-runs/manually-running-a-workflow.
+
+
+### Trigger the release from the Github web UI
+
+* Navigate to Actions https://github.com/gardener/ingress-gce/actions
+* Select **Build, push and release** worflow
+* Click **Run worflow** button
+* Input `New release tag to publish` and `kubernetes/ingress-gce version to build`
+* Click green **Run worflow** button
+
+### Trigger the release from gh CLI
+
+```shell
+gh workflow run release.yaml -f release_tag=<NEW_TAG_TO_RELEASE> -f ingress_gce_version=<TAG_FROM_UPSTREAM>
+```
+
+Where `NEW_TAG_TO_RELEASE` is a new tag for the GH release and image to be
+created and `TAG_FROM_UPSTREAM` is existing target tag to build from
+[kubernetes/ingress-gce](https://github.com/kubernetes/ingress-gce).
+
+Example:
+
+```shell
+gh workflow run release.yaml -f release_tag=v1.30.0-sap.0 -f ingress_gce_version=v1.30.0
+```
+
+Will build [kubernetes/ingress-gce](https://github.com/kubernetes/ingress-gce) binary from v1.30.0 git tag, and publish docker image: `ghcr.io/gardener/ingress-gce:v1.30.0-sap.0`
+
+
 ## How to use this repository template
 
 This template repository can be used to seed new git repositories in the gardener github organisation.
@@ -99,5 +138,3 @@ In case you modify copied/forked source code you must state this in the header v
 To get your project reuse compliant you should register it [here](https://api.reuse.software/register) using your SAP email address. After confirming your email, an inital reuse check is done by the reuse API.
 
 To add the badge to your project's `README.md` file, use the snipped provided by the reuse API.
-
-##
