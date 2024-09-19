@@ -12,9 +12,12 @@ on:
         type: string
 
 env:
-  IMAGE_REGISTRY: ghcr.io
-  IMAGE_REPO: gardener/ingress-gce
+  IMAGE_REGISTRY: europe-docker.pkg.dev
+  IMAGE_REPO: gardener-project/releases/gardener/ingress-gce
   IMAGE_TAG: ${{ inputs.release_tag }}
+  GCP_PROJECT_ID: gardener-project
+  GCP_SERVICE_ACCOUNT: ocm-ci-opensource@gardener-project.iam.gserviceaccount.com
+  WORKLOAD_IDENTITY_PROVIDER: projects/694386720375/locations/global/workloadIdentityPools/github-actions/providers/github-actions-provider
   PLATFORMS: linux/amd64,linux/arm64
 
 defaults:
@@ -41,12 +44,20 @@ jobs:
           persist-credentials: false
           ref: '${{ inputs.ingress_gce_version }}'
 
+      - name: Authenticate against Google-Artifact-Registry
+        id: auth
+        uses: google-github-actions/auth@v2
+        with:
+          token_format: access_token
+          project_id: ${{ env.GCP_PROJECT_ID }}
+          service_account: ${{ env.GCP_SERVICE_ACCOUNT }}
+          workload_identity_provider: ${{ env.WORKLOAD_IDENTITY_PROVIDER }}
       - name: Login to registry
         uses: docker/login-action@v3
         with:
           registry: ${{ env.IMAGE_REGISTRY }}
-          username: ${{ github.repository_owner }}
-          password: ${{ secrets.GITHUB_TOKEN }}
+          username: oauth2accesstoken
+          password: ${{ steps.auth.outputs.access_token }}
 
       - name: Docker setup buildx
         uses: docker/setup-buildx-action@v3
