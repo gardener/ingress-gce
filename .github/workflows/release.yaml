@@ -1,0 +1,72 @@
+name: Build, push and release
+on:
+  workflow_dispatch:
+    inputs:
+      release_tag:
+        description: 'New release git/docker tag to publish'
+        required: true
+        type: string
+      ingress_gce_version:
+        description: 'kubernetes/ingress-gce version to checkout on build'
+        required: true
+        type: string
+
+env:
+  IMAGE_REGISTRY: ghcr.io
+  IMAGE_REPO: gardener/ingress-gce
+  IMAGE_TAG: ${{ inputs.release_tag }}
+  PLATFORMS: linux/amd64,linux/arm64
+
+defaults:
+  run:
+    shell: bash
+
+jobs:
+  build-push-release:
+    permissions:
+      # give GITHUB_TOKEN write permissions
+      packages: write
+      contents: write
+      id-token: write
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout the gardener/ingress-gce repository
+        uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # https://github.com/actions/checkout/releases/tag/v4.1.7
+
+      - name: Checkout the kubernetes/ingress-gce repository
+        uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # https://github.com/actions/checkout/releases/tag/v4.1.7
+        with:
+          repository: 'kubernetes/ingress-gce'
+          path: './ingress-gce'
+          persist-credentials: false
+          ref: '${{ inputs.ingress_gce_version }}'
+
+      - name: Login to registry
+        uses: docker/login-action@9780b0c442fbb1117ed29e0efdff1e18412f7567 # https://github.com/docker/login-action/releases/tag/v3.3.0
+        with:
+          registry: ${{ env.IMAGE_REGISTRY }}
+          username: ${{ github.repository_owner }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Docker setup buildx
+        uses: docker/setup-buildx-action@988b5a0280414f521da01fcc63a27aeeb4b104db # https://github.com/docker/setup-buildx-action/releases/tag/v3.6.1
+        with:
+          platforms: ${{ env.PLATFORMS }}
+
+      - name: Build and push Docker images
+        uses: docker/build-push-action@5cd11c3a4ced054e52742c5fd54dca954e0edd85 # https://github.com/docker/build-push-action/releases/tag/v6.7.0
+        with:
+          context: .
+          tags: |
+            ${{ env.IMAGE_REGISTRY }}/${{ env.IMAGE_REPO }}:${{ env.IMAGE_TAG }}
+          push: true
+          platforms: ${{ env.PLATFORMS }}
+
+      - name: Create new release
+        uses: ncipollo/release-action@2c591bcc8ecdcd2db72b97d6147f871fcd833ba5 # https://github.com/ncipollo/release-action/releases/tag/v1.14.0
+        with:
+          tag: ${{ inputs.release_tag }}
+          makeLatest: true
+          body: |
+            ## Docker Images
+            * ingress-gce: ${{ env.IMAGE_REGISTRY }}/${{ env.IMAGE_REPO }}:${{ env.IMAGE_TAG }}
