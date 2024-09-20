@@ -7,7 +7,7 @@
 SHELL            := bash
 MAKEFLAGS        += --warn-undefined-variables
 MAKEFLAGS        += --no-builtin-rules
-IMAGE_REPOSITORY := ghcr.io/gardener/ingress-gce
+IMAGE_REPOSITORY := europe-docker.pkg.dev/gardener-project/releases/gardener/ingress-gce
 IMAGE_TAG        := $(shell git describe --tags --always)
 
 .PHONY: build

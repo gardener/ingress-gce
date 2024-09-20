@@ -38,7 +38,7 @@ Example:
 gh workflow run release.yaml -f release_tag=v1.30.0-sap.0 -f ingress_gce_version=v1.30.0
 ```
 
-Will build [kubernetes/ingress-gce](https://github.com/kubernetes/ingress-gce) binary from v1.30.0 git tag, and publish docker image: `ghcr.io/gardener/ingress-gce:v1.30.0-sap.0`
+Will build [kubernetes/ingress-gce](https://github.com/kubernetes/ingress-gce) binary from v1.30.0 git tag, and publish docker image: `europe-docker.pkg.dev/gardener-project/releases/gardener/ingress-gce:v1.30.0-sap.0`
 
 
 ## How to use this repository template
