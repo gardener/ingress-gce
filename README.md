@@ -67,7 +67,7 @@ When creating new source code files the license and copyright information should
 Example for go source code files (replace `<year>` with the current year)
 ```
 /*
- * SPDX-FileCopyrightText: <year> Copyright Contributors to the Gardener project
+ * SPDX-FileCopyrightText: <year> Contributors to the Gardener project
  *
  * SPDX-License-Identifier: Apache-2.0
  */
@@ -90,14 +90,14 @@ Source: https://github.com/gardener/<repo name>
 # source code
 
 Files: *
-Copyright: Copyright Contributors to the Gardener project
+Copyright: Contributors to the Gardener project
 License: Apache-2.0
 
 # --------------------------------------------------
 # documentation
 
 Files: *.md
-Copyright: Copyright Contributors to the Gardener project
+Copyright: Contributors to the Gardener project
 License: CC-BY-4.0
 
 # --------------------------------------------------
@@ -124,14 +124,14 @@ Copyright: 2016-2018 The Kubernetes Authors.
 License: Apache-2.0
 
 Files: .ci/*
-Copyright: Copyright Contributors to the Gardener project
+Copyright: Contributors to the Gardener project
 License: Apache-2.0
 ```
 
 #### Modifications
 In case you modify copied/forked source code you must state this in the header via the following text:
 
-**Modifications Copyright <year> Copyright Contributors to the Gardener project**
+**Modifications Copyright <year> Contributors to the Gardener project**
 
 
 ### Get your reuse badge
