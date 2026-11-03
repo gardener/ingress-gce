@@ -9,6 +9,10 @@ on:
           - bump-patch
 
 
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
 jobs:
   build:
     uses: ./.github/workflows/build.yaml
