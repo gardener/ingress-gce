@@ -59,6 +59,17 @@ jobs:
             exit 1
           fi
           echo "OK: ${image_ref} does not yet exist"
+  
+  read-upstream-commit:
+    runs-on: ubuntu-latest
+    outputs:
+      upstream-commit: ${{ steps.read.outputs.upstream-commit }}
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - id: read
+        run: echo "upstream-commit=$(cat UPSTREAM_COMMIT | tr -d '[:space:]')" >> "${GITHUB_OUTPUT}"
 
   oci-images:
     name: Build OCI-Images
@@ -66,6 +77,7 @@ jobs:
       - prepare
       - calculate-version
       - check-release-version-not-exists
+      - read-upstream-commit
     permissions:
       contents: read
       packages: write
@@ -88,3 +100,4 @@ jobs:
       extra-tags:
       build-args: |
         EFFECTIVE_VERSION=${{ needs.calculate-version.outputs.version }}
+        UPSTREAM_COMMIT=${{ needs.read-upstream-commit.outputs.upstream-commit }}
