@@ -11,3 +11,12 @@ main-source:
         policy: skip
         comment: |
           the repository does not contain source code
+sources:
+  - name: upstream-ingress-gce
+    type: git
+    version: v1.38.2
+    access:
+      type: github
+      repoUrl: github.com/kubernetes/ingress-gce
+      ref: v1.38.2
+      commit: b08939895cce47e6772f5adb541f5e2e38528753

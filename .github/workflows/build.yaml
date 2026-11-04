@@ -71,6 +71,16 @@ jobs:
       - id: read
         run: echo "upstream-commit=$(cat UPSTREAM_COMMIT | tr -d '[:space:]')" >> "${GITHUB_OUTPUT}"
 
+  check-ocm-source-pin:
+    name: Check OCM Source Pin
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - name: verify ocm source matches VERSION and UPSTREAM_COMMIT
+        run: python3 .github/scripts/check-ocm-source-pin.py
+
   oci-images:
     name: Build OCI-Images
     needs:
@@ -78,6 +88,7 @@ jobs:
       - calculate-version
       - check-release-version-not-exists
       - read-upstream-commit
+      - check-ocm-source-pin
     permissions:
       contents: read
       packages: write

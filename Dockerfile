@@ -16,7 +16,7 @@ RUN git clone https://github.com/kubernetes/ingress-gce.git -b "$EFFECTIVE_VERSI
 
 RUN GO111MODULE=on CGO_ENABLED=0 GOOS=linux GOARCH="$ARCH" GOPROXY=${GOPROXY} go build \
     -trimpath \
-    -ldflags="${LDFLAGS}" \
+    -ldflags="-X k8s.io/ingress-gce/pkg/version.Version=${EFFECTIVE_VERSION} -X k8s.io/ingress-gce/pkg/version.GitCommit=${UPSTREAM_COMMIT}" \
     -o=glbc \
     ./cmd/glbc
 
