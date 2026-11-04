@@ -9,6 +9,10 @@ on:
           - bump-patch
 
 
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
 jobs:
   guard-ref:
     runs-on: ubuntu-latest
