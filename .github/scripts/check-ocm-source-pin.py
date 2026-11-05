@@ -5,8 +5,8 @@
 # SPDX-License-Identifier: Apache-2.0
 #
 # Verifies that the upstream-ingress-gce source entry in .ocm/base-component.yaml
-# is in sync with VERSION and UPSTREAM_COMMIT. Run as part of the build workflow
-# to catch cases where these three files are updated non-atomically.
+# is in sync with VERSION and UPSTREAM_COMMIT. Intended to run only on release
+# builds, where all three files must be updated atomically.
 
 import sys
 import yaml

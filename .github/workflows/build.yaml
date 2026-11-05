@@ -80,6 +80,7 @@ jobs:
       - uses: actions/checkout@v4
       - name: verify ocm source matches VERSION and UPSTREAM_COMMIT
         run: python3 .github/scripts/check-ocm-source-pin.py
+        if: ${{ inputs.mode == 'release' }}
 
   oci-images:
     name: Build OCI-Images
