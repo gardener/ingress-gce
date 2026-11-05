@@ -14,6 +14,7 @@ main-source:
 sources:
   - name: upstream-ingress-gce
     type: git
+    version: v1.38.3
     access:
       type: github
       repoUrl: github.com/kubernetes/ingress-gce

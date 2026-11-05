@@ -8,11 +8,10 @@ This repository is dedicated to building [kubernetes/ingress-gce](https://github
 
 This repo contains no Go source code. Instead, it clones `kubernetes/ingress-gce` at a pinned upstream tag and commit during the Docker build and compiles it there. The upstream version is controlled entirely by the `upstream-ingress-gce` source entry in `.ocm/base-component.yaml`:
 
-- `access.ref` — the upstream tag to clone (e.g. `v1.38.2`)
+- `version` and `access.ref` — the upstream tag to clone (e.g. `v1.38.3`); must equal `VERSION` (ignoring `-dev` suffix)
 - `access.commit` — the exact commit SHA that tag must resolve to; the Dockerfile hard-fails if they diverge
-- `version` — mirrors `access.ref`, used for OCM component identity
 
-`VERSION` tracks the gardener packaging version and may differ from the upstream version (e.g. when only the Go toolchain is bumped).
+All three fields must be updated atomically when bumping the upstream version. The CI check enforces that `version` and `access.ref` match `VERSION`.
 
 ## Bumping the upstream version
 
@@ -24,7 +23,7 @@ When a new [kubernetes/ingress-gce](https://github.com/kubernetes/ingress-gce) r
    # use the commit the tag points to (dereference ^{} entries for annotated tags)
    ```
 
-2. Open a PR updating `.ocm/base-component.yaml` — set `version`, `access.ref`, and `access.commit` to the new tag and SHA. Also update `VERSION` if the gardener release version should track the upstream version.
+2. Open a PR updating `.ocm/base-component.yaml` and `VERSION` — set `version`, `access.ref`, and `access.commit` to the new tag and SHA, and update `VERSION` to match (e.g. `v1.38.3`).
 
 3. After the PR merges, trigger the release workflow.
 
