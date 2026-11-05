@@ -6,12 +6,13 @@ This repository is dedicated to building [kubernetes/ingress-gce](https://github
 
 ## Repository structure
 
-This repo contains no Go source code. Instead, it clones `kubernetes/ingress-gce` at a pinned upstream tag and commit during the Docker build and compiles it there. Two files control which upstream version is built:
+This repo contains no Go source code. Instead, it clones `kubernetes/ingress-gce` at a pinned upstream tag and commit during the Docker build and compiles it there. The upstream version is controlled entirely by the `upstream-ingress-gce` source entry in `.ocm/base-component.yaml`:
 
-- `VERSION` — the upstream tag to clone (e.g. `v1.38.2`), also used as the gardener release version
-- `UPSTREAM_COMMIT` — the exact commit SHA that tag must resolve to; the Dockerfile hard-fails if they diverge
+- `access.ref` — the upstream tag to clone (e.g. `v1.38.2`)
+- `access.commit` — the exact commit SHA that tag must resolve to; the Dockerfile hard-fails if they diverge
+- `version` — mirrors `access.ref`, used for OCM component identity
 
-Both files **must be updated atomically** in the same PR whenever the upstream version changes. The `.ocm/base-component.yaml` `sources` entry must also be updated to reflect the new tag and commit.
+`VERSION` tracks the gardener packaging version and may differ from the upstream version (e.g. when only the Go toolchain is bumped).
 
 ## Bumping the upstream version
 
@@ -23,10 +24,7 @@ When a new [kubernetes/ingress-gce](https://github.com/kubernetes/ingress-gce) r
    # use the commit the tag points to (dereference ^{} entries for annotated tags)
    ```
 
-2. Open a PR updating these three files together:
-   - `VERSION` → new tag (e.g. `v1.38.3`)
-   - `UPSTREAM_COMMIT` → the commit SHA from step 1
-   - `.ocm/base-component.yaml` → update `sources[0].version`, `sources[0].access.ref`, and `sources[0].access.commit`
+2. Open a PR updating `.ocm/base-component.yaml` — set `version`, `access.ref`, and `access.commit` to the new tag and SHA. Also update `VERSION` if the gardener release version should track the upstream version.
 
 3. After the PR merges, trigger the release workflow.
 
