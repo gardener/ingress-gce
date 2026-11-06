@@ -30,6 +30,10 @@ jobs:
         env:
           MODE: ${{ inputs.mode }}
         run: python3 .ci/upstream.py prepare --mode "$MODE" --checkout upstream --output "$GITHUB_OUTPUT"
+      - name: Export upstream provenance
+        uses: gardener/cc-utils/.github/actions/export-ocm-fragments@v1
+        with:
+          ocm-sources-file: .ocm/upstream-source.json
 
   prepare:
     uses: gardener/cc-utils/.github/workflows/prepare.yaml@v1
