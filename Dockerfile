@@ -6,17 +6,16 @@ ARG ARCH=arm64
 
 FROM builder-$TARGETARCH AS builder
 
-ARG EFFECTIVE_VERSION
+ARG UPSTREAM_VERSION
 ARG UPSTREAM_COMMIT
 WORKDIR /tmp/ingress-gce
 
-RUN git clone https://github.com/kubernetes/ingress-gce.git -b "$EFFECTIVE_VERSION" --depth 1 . && \
-    [ "$(git rev-parse HEAD)" = "${UPSTREAM_COMMIT}" ] || \
-    { echo "upstream commit mismatch: expected ${UPSTREAM_COMMIT}, got $(git rev-parse HEAD)"; exit 1; }
+COPY .ci/checkout-upstream.sh /usr/local/bin/checkout-upstream.sh
+RUN sh /usr/local/bin/checkout-upstream.sh "$UPSTREAM_VERSION" "$UPSTREAM_COMMIT" .
 
 RUN GO111MODULE=on CGO_ENABLED=0 GOOS=linux GOARCH="$ARCH" GOPROXY=${GOPROXY} go build \
     -trimpath \
-    -ldflags="-X k8s.io/ingress-gce/pkg/version.Version=${EFFECTIVE_VERSION} -X k8s.io/ingress-gce/pkg/version.GitCommit=${UPSTREAM_COMMIT}" \
+    -ldflags="-X k8s.io/ingress-gce/pkg/version.Version=${UPSTREAM_VERSION} -X k8s.io/ingress-gce/pkg/version.GitCommit=${UPSTREAM_COMMIT}" \
     -o=glbc \
     ./cmd/glbc
 

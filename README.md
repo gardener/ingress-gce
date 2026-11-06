@@ -6,26 +6,45 @@ This repository is dedicated to building [kubernetes/ingress-gce](https://github
 
 ## Repository structure
 
-This repo contains no Go source code. Instead, it clones `kubernetes/ingress-gce` at a pinned upstream tag and commit during the Docker build and compiles it there. The upstream version is controlled entirely by the `upstream-ingress-gce` source entry in `.ocm/base-component.yaml`:
+This repo contains no Go source code. Instead, it clones `kubernetes/ingress-gce` at a pinned upstream tag and commit during the Docker build and compiles it there. Two files control versioning:
 
-- `version` and `access.ref` — the upstream tag to clone (e.g. `v1.38.3`); must equal `VERSION` (ignoring `-dev` suffix)
-- `access.commit` — the exact commit SHA that tag must resolve to; the Dockerfile hard-fails if they diverge
+- **`VERSION`** — the *packaging version* of the image this repository produces (e.g. `v1.38.3`)
+- **`.ocm/upstream-source.json`** — the upstream release and commit to build
 
-All three fields must be updated atomically when bumping the upstream version. The CI check enforces that `version` and `access.ref` match `VERSION`.
+These are separate because a packaging release can differ from the upstream release — for example, a Go toolchain security update produces a new packaging patch version while the upstream source stays the same.
 
-## Bumping the upstream version
+## Updating versions
 
-When a new [kubernetes/ingress-gce](https://github.com/kubernetes/ingress-gce) release is available:
+### Adopting a new upstream release
 
-1. Look up the commit SHA for the new tag:
-   ```shell
-   git ls-remote https://github.com/kubernetes/ingress-gce refs/tags/<NEW_TAG>
-   # use the commit the tag points to (dereference ^{} entries for annotated tags)
-   ```
+When a new [kubernetes/ingress-gce](https://github.com/kubernetes/ingress-gce) release is available, update `version`, `access.ref`, and `access.commit` in `.ocm/upstream-source.json` together. Obtain the upstream commit ID with:
 
-2. Open a PR updating `.ocm/base-component.yaml` and `VERSION` — set `version`, `access.ref`, and `access.commit` to the new tag and SHA, and update `VERSION` to match (e.g. `v1.38.3`).
+```shell
+git ls-remote https://github.com/kubernetes/ingress-gce.git \
+  'refs/tags/v1.38.3' 'refs/tags/v1.38.3^{}'
+```
 
-3. After the PR merges, trigger the release workflow.
+Some Git tags are annotated and return two lines; use the commit ID from the `^{}` line. For a lightweight tag, use the single returned ID.
+
+### Selecting the packaging version
+
+For each new release in a major/minor line, choose the packaging patch as `max(upstream patch, latest published packaging patch + 1)`. This keeps versions equal when possible and gives build-only changes (e.g. Go toolchain bumps) a new version. For example:
+
+- Upstream `v1.38.0`, no prior packaging release → packaging `v1.38.0`
+- Go toolchain CVE fix, upstream still `v1.38.0` → packaging `v1.38.1`
+- Upstream bumps to `v1.38.1` → packaging `v1.38.2` (since `v1.38.1` is already published)
+- Upstream bumps to `v1.38.5` → packaging `v1.38.5`
+
+The release build enforces that major/minor match and packaging patch >= upstream patch. Check [published releases](https://github.com/gardener/ingress-gce/releases) before selecting a version and never overwrite an existing release.
+
+Set `VERSION` to the intended packaging version (with `-dev` suffix during development). Update `.ocm/upstream-source.json` to match. Record the release in [PACKAGING.md](PACKAGING.md).
+
+### Go toolchain update (CVE fix)
+
+1. Update `FROM golang:X.Y.Z` in the `Dockerfile`
+2. Bump `VERSION` to the next packaging patch (e.g. `v1.38.0` → `v1.38.1-dev`)
+3. Leave `.ocm/upstream-source.json` unchanged
+4. Add a row to `PACKAGING.md`
 
 ## Triggering a release
 
@@ -36,7 +55,7 @@ gh workflow run release.yaml -f next-version=bump-patch
 # or: -f next-version=bump-minor
 ```
 
-The workflow builds the image, publishes it to the Gardener GAR, creates a GitHub release, and bumps the version for the next development cycle.
+The workflow validates that `VERSION` and `.ocm/upstream-source.json` are consistent, builds the image, publishes it to the Gardener GAR, creates a GitHub release, and bumps the version for the next development cycle.
 
 
 ## How to use this repository template

@@ -12,35 +12,31 @@ on:
           as target-oci-registry.
 
 jobs:
+  upstream-source:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    outputs:
+      version: ${{ steps.upstream.outputs.version }}
+      commit: ${{ steps.upstream.outputs.commit }}
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+      - name: Test upstream intake
+        run: python3 -B .ci/tests/test_upstream.py -v
+      - name: Verify and check out upstream release
+        id: upstream
+        env:
+          MODE: ${{ inputs.mode }}
+        run: python3 .ci/upstream.py prepare --mode "$MODE" --checkout upstream --output "$GITHUB_OUTPUT"
+
   prepare:
     uses: gardener/cc-utils/.github/workflows/prepare.yaml@v1
     with:
       mode: ${{ inputs.mode }}
     permissions:
       id-token: write
-
-  calculate-version:
-    runs-on: ubuntu-latest
-    needs:
-      - prepare
-    outputs:
-      version: ${{ steps.version.outputs.version }}
-    permissions:
-      contents: read
-    steps:
-      - name: calculate-version
-        id: version
-        shell: bash
-        run: |
-          set -eu
-          # effective version is used in `Dockerfile` to specify the branch of an external
-          # git-repository. Hence, for non-release-builds, we cannot use snapshot-version
-          version='${{ needs.prepare.outputs.version }}'
-          if [ '${{ inputs.mode }}' == 'snapshot' ]; then
-            version="$(echo ${version} | cut -d- -f1)"
-          fi
-
-          echo "version=${version}" >> "${GITHUB_OUTPUT}"
 
   check-release-version-not-exists:
     name: Check Release Version Does Not Exist
@@ -59,45 +55,13 @@ jobs:
             exit 1
           fi
           echo "OK: ${image_ref} does not yet exist"
-  
-  read-upstream-commit:
-    runs-on: ubuntu-latest
-    outputs:
-      upstream-commit: ${{ steps.read.outputs.upstream-commit }}
-    permissions:
-      contents: read
-    steps:
-      - uses: actions/checkout@v4
-      - id: read
-        run: |
-          echo "upstream-commit=$(python3 -c "
-          import yaml
-          with open('.ocm/base-component.yaml') as f:
-              ocm = yaml.safe_load(f)
-          sources = ocm.get('sources', [])
-          upstream = next(s for s in sources if s['name'] == 'upstream-ingress-gce')
-          print(upstream['access']['commit'], end='')
-          ")" >> "${GITHUB_OUTPUT}"
-
-  check-ocm-source-pin:
-    name: Check OCM Source Pin
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
-    steps:
-      - uses: actions/checkout@v4
-      - name: verify ocm source matches VERSION and UPSTREAM_COMMIT
-        run: python3 .github/scripts/check-ocm-source-pin.py
-
 
   oci-images:
     name: Build OCI-Images
     needs:
       - prepare
-      - calculate-version
+      - upstream-source
       - check-release-version-not-exists
-      - read-upstream-commit
-      - check-ocm-source-pin
     permissions:
       contents: read
       packages: write
@@ -119,5 +83,5 @@ jobs:
       oci-platforms: linux/amd64,linux/arm64
       extra-tags:
       build-args: |
-        EFFECTIVE_VERSION=${{ needs.calculate-version.outputs.version }}
-        UPSTREAM_COMMIT=${{ needs.read-upstream-commit.outputs.upstream-commit }}
+        UPSTREAM_VERSION=${{ needs.upstream-source.outputs.version }}
+        UPSTREAM_COMMIT=${{ needs.upstream-source.outputs.commit }}
