@@ -2,43 +2,60 @@
 
 [![reuse compliant](https://reuse.software/badge/reuse-compliant.svg)](https://reuse.software/)
 
-This repository is dedicated to building [kubernetes/ingress-gce](https://github.com/kubernetes/ingress-gce) images for Gardener project.
+This repository is dedicated to building [kubernetes/ingress-gce](https://github.com/kubernetes/ingress-gce) images for the Gardener project.
 
-## Building a new Release
+## Repository structure
 
-Once in a while a new release of the
-[kubernetes/ingress-gce](https://github.com/kubernetes/ingress-gce) will be
-released and we need to build new container image. In order to trigger the new
-release one can use two options, tigger the release workflow from the web UI or
-from CLI, see more at the
-https://docs.github.com/en/actions/managing-workflow-runs-and-deployments/managing-workflow-runs/manually-running-a-workflow.
+This repo contains no Go source code. Instead, it clones `kubernetes/ingress-gce` at a pinned upstream tag and commit during the Docker build and compiles it there. Two files control versioning:
 
+- **`VERSION`** — the *packaging version* of the image this repository produces (e.g. `v1.38.3`)
+- **`.ocm/upstream-source.json`** — the upstream release and commit to build
 
-### Trigger the release from the Github web UI
+These are separate because a packaging release can differ from the upstream release — for example, a Go toolchain security update produces a new packaging patch version while the upstream source stays the same.
 
-* Navigate to Actions https://github.com/gardener/ingress-gce/actions
-* Select **Build, push and release** worflow
-* Click **Run worflow** button
-* Input `New release tag to publish` and `kubernetes/ingress-gce version to build`
-* Click green **Run worflow** button
+## Updating versions
 
-### Trigger the release from gh CLI
+### Adopting a new upstream release
+
+When a new [kubernetes/ingress-gce](https://github.com/kubernetes/ingress-gce) release is available, update `version`, `access.ref`, and `access.commit` in `.ocm/upstream-source.json` together. Obtain the upstream commit ID with:
 
 ```shell
-gh workflow run release.yaml -f release_tag=<NEW_TAG_TO_RELEASE> -f ingress_gce_version=<TAG_FROM_UPSTREAM>
+git ls-remote https://github.com/kubernetes/ingress-gce.git \
+  'refs/tags/v1.38.3' 'refs/tags/v1.38.3^{}'
 ```
 
-Where `NEW_TAG_TO_RELEASE` is a new tag for the GH release and image to be
-created and `TAG_FROM_UPSTREAM` is existing target tag to build from
-[kubernetes/ingress-gce](https://github.com/kubernetes/ingress-gce).
+Some Git tags are annotated and return two lines; use the commit ID from the `^{}` line. For a lightweight tag, use the single returned ID.
 
-Example:
+### Selecting the packaging version
+
+For each new release in a major/minor line, choose the packaging patch as `max(upstream patch, latest published packaging patch + 1)`. This keeps versions equal when possible and gives build-only changes (e.g. Go toolchain bumps) a new version. For example:
+
+- Upstream `v1.38.0`, no prior packaging release → packaging `v1.38.0`
+- Go toolchain CVE fix, upstream still `v1.38.0` → packaging `v1.38.1`
+- Upstream bumps to `v1.38.1` → packaging `v1.38.2` (since `v1.38.1` is already published)
+- Upstream bumps to `v1.38.5` → packaging `v1.38.5`
+
+The release build enforces that major/minor match and packaging patch >= upstream patch. Check [published releases](https://github.com/gardener/ingress-gce/releases) before selecting a version and never overwrite an existing release.
+
+Set `VERSION` to the intended packaging version (with `-dev` suffix during development). Update `.ocm/upstream-source.json` to match. Record the release in [PACKAGING.md](PACKAGING.md).
+
+### Go toolchain update (CVE fix)
+
+1. Update `FROM golang:X.Y.Z` in the `Dockerfile`
+2. Bump `VERSION` to the next packaging patch (e.g. `v1.38.0` → `v1.38.1-dev`)
+3. Leave `.ocm/upstream-source.json` unchanged
+4. Add a row to `PACKAGING.md`
+
+## Triggering a release
+
+Dispatch the **Release** workflow from `master` or a `release-*` branch via the GitHub web UI or CLI:
 
 ```shell
-gh workflow run release.yaml -f release_tag=v1.30.0-sap.0 -f ingress_gce_version=v1.30.0
+gh workflow run release.yaml -f next-version=bump-patch
+# or: -f next-version=bump-minor
 ```
 
-Will build [kubernetes/ingress-gce](https://github.com/kubernetes/ingress-gce) binary from v1.30.0 git tag, and publish docker image: `europe-docker.pkg.dev/gardener-project/releases/gardener/ingress-gce:v1.30.0-sap.0`
+The workflow validates that `VERSION` and `.ocm/upstream-source.json` are consistent, builds the image, publishes it to the Gardener GAR, creates a GitHub release, and bumps the version for the next development cycle.
 
 
 ## How to use this repository template

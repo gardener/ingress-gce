@@ -1,0 +1,11 @@
+{
+  "name": "ingress-gce",
+  "version": "v1.38.3",
+  "type": "git",
+  "access": {
+    "type": "github",
+    "repoUrl": "github.com/kubernetes/ingress-gce",
+    "ref": "refs/tags/v1.38.3",
+    "commit": "b08939895cce47e6772f5adb541f5e2e38528753"
+  }
+}
